@@ -7,6 +7,9 @@ import { Batches } from "./batches";
 
 // Create GameLobbies
 Batches.after.insert(function(userId, batch) {
+
+  config.batchInit(batch);
+
   let gameLobbies = [];
   switch (batch.assignment) {
     case "simple":

@@ -13,6 +13,10 @@ import log from "./lib/log";
 const config = { bots: {} };
 
 const Empirica = {
+  batchInit(func) {
+    config.batchInit = func;
+  },
+
   // New name for init: gameInit
   gameInit(func) {
     config.gameInit = func;

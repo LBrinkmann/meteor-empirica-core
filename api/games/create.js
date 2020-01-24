@@ -55,6 +55,8 @@ export const createGameFromLobby = gameLobby => {
   // given the factors and players given.
   const params = { data: {}, rounds: [], players };
   var gameCollector = {
+    batchId, 
+    treatmentId,
     players,
     treatment: factors,
 
