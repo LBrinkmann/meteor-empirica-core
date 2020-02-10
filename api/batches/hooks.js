@@ -8,7 +8,8 @@ import { Batches } from "./batches";
 // Create GameLobbies
 Batches.after.insert(function(userId, batch) {
 
-  config.batchInit(batch);
+  const treatmentsFactors = batch.simpleConfig.treatments.map(t => Treatments.findOne(t._id).factorsObject());
+  config.batchInit(batch, treatmentsFactors);
 
   let gameLobbies = [];
   switch (batch.assignment) {
