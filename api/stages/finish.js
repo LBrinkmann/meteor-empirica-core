@@ -11,6 +11,8 @@ import { Treatments } from "../treatments/treatments.js";
 import { Stages } from "./stages.js";
 
 export const endOfStage = stageId => {
+  console.time('endOfStage#all#' + stageId)
+  console.time('endOfStage#fetchData#' + stageId)
   const stage = Stages.findOne(stageId);
   const { index, gameId, roundId } = stage;
   const game = Games.findOne(gameId);
@@ -25,12 +27,21 @@ export const endOfStage = stageId => {
     round.stages = Stages.find({ roundId: round._id }).fetch();
   });
 
+  console.timeEnd('endOfStage#fetchData#' + stageId)
+
+
+  console.time('endOfStage#augment#' + stageId)
+
   augmentGameStageRound(game, stage, round);
   players.forEach(player => {
     player.stage = _.extend({}, stage);
     player.round = _.extend({}, round);
     augmentPlayerStageRound(player, player.stage, player.round, game);
   });
+
+  console.timeEnd('endOfStage#augment#' + stageId)
+
+  console.time('endOfStage#callbacks#' + stageId)
 
   const { onStageEnd, onRoundEnd, onRoundStart, onStageStart } = config;
   if (onStageEnd) {
@@ -42,6 +53,11 @@ export const endOfStage = stageId => {
   if ((onRoundEnd && !nextStage) || stage.roundId !== nextStage.roundId) {
     onRoundEnd(game, round, players);
   }
+
+  console.timeEnd('endOfStage#callbacks#' + stageId)
+
+
+  console.time('endOfStage#nextStage#' + stageId)
 
   if (nextStage && (onRoundStart || onStageStart)) {
     const nextRound = Rounds.findOne(nextStage.roundId);
@@ -66,6 +82,10 @@ export const endOfStage = stageId => {
       onStageStart(game, nextRound, nextStage, players);
     }
   }
+
+  console.timeEnd('endOfStage#nextStage#' + stageId)
+
+  console.time('endOfStage#updates#' + stageId)
 
   if (nextStage) {
     // go to next stage
@@ -95,4 +115,6 @@ export const endOfStage = stageId => {
       $set: { finishedAt: new Date() }
     });
   }
+  console.timeEnd('endOfStage#updates#' + stageId)
+  console.timeEnd('endOfStage#all#' + stageId)
 };
