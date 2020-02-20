@@ -186,6 +186,7 @@ export const createGameFromLobby = gameLobby => {
   let stageIndex = 0;
   let totalDuration = 0;
   let firstRoundId;
+  console.time('inserts#' + gameId)
   params.roundIds = params.rounds.map((round, index) => {
     const roundId = Rounds.insert(_.extend({ gameId, index }, round), {
       autoConvert: false,
@@ -235,6 +236,8 @@ export const createGameFromLobby = gameLobby => {
     Rounds.update(roundId, { $set: { stageIds, playerRoundIds } });
     return roundId;
   });
+
+  console.timeEnd('inserts#' + gameId)
 
   // An estimation of the finish time to help querying.
   // At the moment, this will 100% break with pausing the game/batch.
