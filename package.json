@@ -51,5 +51,7 @@
       "git add"
     ]
   },
-  "dependencies": {}
+  "dependencies": {
+    "bluebird": "^3.7.2"
+  }
 }

@@ -55,7 +55,7 @@ export const createGameFromLobby = gameLobby => {
   // given the factors and players given.
   const params = { data: {}, rounds: [], players };
   var gameCollector = {
-    batchId, 
+    batchId,
     treatmentId,
     players,
     treatment: factors,
@@ -186,7 +186,7 @@ export const createGameFromLobby = gameLobby => {
   let stageIndex = 0;
   let totalDuration = 0;
   let firstRoundId;
-  console.time('inserts#' + gameId)
+  console.time("inserts#" + gameId);
   params.roundIds = params.rounds.map((round, index) => {
     const roundId = Rounds.insert(_.extend({ gameId, index }, round), {
       autoConvert: false,
@@ -237,7 +237,7 @@ export const createGameFromLobby = gameLobby => {
     return roundId;
   });
 
-  console.timeEnd('inserts#' + gameId)
+  console.timeEnd("inserts#" + gameId);
 
   // An estimation of the finish time to help querying.
   // At the moment, this will 100% break with pausing the game/batch.

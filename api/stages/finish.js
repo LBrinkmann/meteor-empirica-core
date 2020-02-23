@@ -1,3 +1,4 @@
+import bluebird from "bluebird";
 import moment from "moment";
 import { config } from "../../server";
 import { Games } from "../games/games.js";
@@ -10,27 +11,34 @@ import { Rounds } from "../rounds/rounds.js";
 import { Treatments } from "../treatments/treatments.js";
 import { Stages } from "./stages.js";
 
-export const endOfStage = stageId => {
-  console.time('endOfStage#all#' + stageId)
-  console.time('endOfStage#fetchData#' + stageId)
+export const endOfStage = async stageId => {
+  console.time("endOfStage#all#" + stageId);
+  console.time("endOfStage#fetchData#" + stageId);
   const stage = Stages.findOne(stageId);
   const { index, gameId, roundId } = stage;
-  const game = Games.findOne(gameId);
-  const round = Rounds.findOne(roundId);
-  const players = Players.find({ gameId }).fetch();
+
+  const [game, round, players] = await Promise.all([
+    Games.findOne(gameId),
+    Rounds.findOne(roundId),
+    Players.find({ gameId }).fetch()
+  ]);
+
   const treatment = Treatments.findOne(game.treatmentId);
 
   game.treatment = treatment.factorsObject();
   game.players = players;
   game.rounds = Rounds.find({ gameId }).fetch();
-  game.rounds.forEach(round => {
-    round.stages = Stages.find({ roundId: round._id }).fetch();
-  });
+  await bluebird.map(
+    game.rounds,
+    Meteor.bindEnvironment(round => {
+      round.stages = Stages.find({ roundId: round._id }).fetch();
+    }),
+    { concurrency: 10 }
+  );
 
-  console.timeEnd('endOfStage#fetchData#' + stageId)
+  console.timeEnd("endOfStage#fetchData#" + stageId);
 
-
-  console.time('endOfStage#augment#' + stageId)
+  console.time("endOfStage#augment#" + stageId);
 
   augmentGameStageRound(game, stage, round);
   players.forEach(player => {
@@ -39,9 +47,9 @@ export const endOfStage = stageId => {
     augmentPlayerStageRound(player, player.stage, player.round, game);
   });
 
-  console.timeEnd('endOfStage#augment#' + stageId)
+  console.timeEnd("endOfStage#augment#" + stageId);
 
-  console.time('endOfStage#callbacks#' + stageId)
+  console.time("endOfStage#callbacks#" + stageId);
 
   const { onStageEnd, onRoundEnd, onRoundStart, onStageStart } = config;
   if (onStageEnd) {
@@ -54,10 +62,9 @@ export const endOfStage = stageId => {
     onRoundEnd(game, round, players);
   }
 
-  console.timeEnd('endOfStage#callbacks#' + stageId)
+  console.timeEnd("endOfStage#callbacks#" + stageId);
 
-
-  console.time('endOfStage#nextStage#' + stageId)
+  console.time("endOfStage#nextStage#" + stageId);
 
   if (nextStage && (onRoundStart || onStageStart)) {
     const nextRound = Rounds.findOne(nextStage.roundId);
@@ -83,9 +90,9 @@ export const endOfStage = stageId => {
     }
   }
 
-  console.timeEnd('endOfStage#nextStage#' + stageId)
+  console.timeEnd("endOfStage#nextStage#" + stageId);
 
-  console.time('endOfStage#updates#' + stageId)
+  console.time("endOfStage#updates#" + stageId);
 
   if (nextStage) {
     // go to next stage
@@ -115,6 +122,6 @@ export const endOfStage = stageId => {
       $set: { finishedAt: new Date() }
     });
   }
-  console.timeEnd('endOfStage#updates#' + stageId)
-  console.timeEnd('endOfStage#all#' + stageId)
+  console.timeEnd("endOfStage#updates#" + stageId);
+  console.timeEnd("endOfStage#all#" + stageId);
 };
