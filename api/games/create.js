@@ -26,7 +26,6 @@ e.g.: round.addStage({
   displayName: "Response",
   durationInSeconds: 120
 });
-
 `;
 
 export const createGameFromLobby = gameLobby => {
