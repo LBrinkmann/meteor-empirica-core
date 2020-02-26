@@ -1,3 +1,4 @@
+import bluebird from "bluebird";
 import moment from "moment";
 
 import { Batches } from "../batches/batches.js";
@@ -29,7 +30,17 @@ e.g.: round.addStage({
 
 `;
 
-export const createGameFromLobby = gameLobby => {
+function makeId() {
+  let result = "";
+  const characters = "23456789ABCDEFGHJKLMNPQRSTWXYZabcdefghijkmnopqrstuvwxyz";
+  const charactersLength = characters.length;
+  for (let i = 0; i < 17; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+}
+
+export const createGameFromLobby = async gameLobby => {
   if (Games.find({ gameLobbyId: gameLobby._id }).count() > 0) {
     return;
   }
@@ -70,7 +81,7 @@ export const createGameFromLobby = gameLobby => {
 
     addRound(props) {
       const data = props ? props.data : {} || {};
-      const round = { data, stages: [] };
+      const round = { data, stages: [], _id: makeId(10) };
       params.rounds.push(round);
       return {
         get(k) {
@@ -106,6 +117,7 @@ export const createGameFromLobby = gameLobby => {
           }
 
           const stage = {
+            _id: makeId(10),
             name,
             displayName,
             durationInSeconds: durationInSecondsAsInt
@@ -187,55 +199,108 @@ export const createGameFromLobby = gameLobby => {
   let totalDuration = 0;
   let firstRoundId;
   console.time("inserts#" + gameId);
-  params.roundIds = params.rounds.map((round, index) => {
-    const roundId = Rounds.insert(_.extend({ gameId, index }, round), {
-      autoConvert: false,
-      filter: false,
-      validate: false,
-      trimStrings: false,
-      removeEmptyStrings: false
-    });
-    const stageIds = round.stages.map(stage => {
+
+  const rounds = params.rounds.map((round, index) => {
+    return _.extend(
+      {
+        gameId,
+        index,
+        _id: makeId(10),
+        stageIds: round.stages.map(stage => stage._id)
+      },
+      round
+    );
+  });
+  params.roundIds = rounds.map(round => round._id);
+
+  const CONCURRENCY = 20;
+  for (const round of rounds) {
+    const roundId = round._id;
+    console.time("inserts-one-round#" + roundId);
+    const stages = round.stages.map(roundStage => {
+      const stage = _.extend(
+        { gameId, roundId, index: stageIndex },
+        roundStage
+      );
       if (batch.debugMode) {
         stage.durationInSeconds = 60 * 60; // Stage time in debugMode is 1h
       }
       totalDuration += stage.durationInSeconds;
-      const sParams = _.extend({ gameId, roundId, index: stageIndex }, stage);
-      const stageId = Stages.insert(sParams, {
+      stageIndex++;
+      if (!params.currentStageId) {
+        firstRoundId = roundId;
+        params.currentStageId = stage._id;
+      }
+      return stage;
+    });
+    await bluebird.map(
+      stages,
+      Meteor.bindEnvironment(async stage => {
+        const stageId = stage._id;
+        const playerStages = params.players.map(({ _id: playerId }) => {
+          return {
+            _id: makeId(10),
+            playerId,
+            stageId,
+            roundId,
+            gameId,
+            batchId
+          };
+        });
+        playerStages.map(playerStage => {
+          PlayerStages.insert(playerStage);
+        });
+        Stages.insert(
+          {
+            ...stage,
+            playerStageIds: playerStages.map(playerStage => playerStage._id)
+          },
+          {
+            autoConvert: false,
+            filter: false,
+            validate: false,
+            trimStrings: false,
+            removeEmptyStrings: false
+          }
+        );
+      }),
+      {
+        concurrency: CONCURRENCY
+      }
+    );
+    const playerRounds = params.players.map(({ _id: playerId }) => {
+      return {
+        _id: makeId(10),
+        playerId,
+        roundId,
+        gameId,
+        batchId
+      };
+    });
+    await bluebird.map(
+      playerRounds,
+      Meteor.bindEnvironment(playerRound => {
+        PlayerRounds.insert(playerRound);
+      }),
+      { concurrency: CONCURRENCY }
+    );
+    round.playerRoundIds = playerRounds.map(playerRound => playerRound._id);
+    console.timeEnd("inserts-one-round#" + roundId);
+  }
+
+  bluebird.map(
+    rounds,
+    Meteor.bindEnvironment(round => {
+      Rounds.insert(round, {
         autoConvert: false,
         filter: false,
         validate: false,
         trimStrings: false,
         removeEmptyStrings: false
       });
-      stageIndex++;
-      if (!params.currentStageId) {
-        firstRoundId = roundId;
-        params.currentStageId = stageId;
-      }
-      const playerStageIds = params.players.map(({ _id: playerId }) => {
-        return PlayerStages.insert({
-          playerId,
-          stageId,
-          roundId,
-          gameId,
-          batchId
-        });
-      });
-      Stages.update(stageId, { $set: { playerStageIds } });
-      return stageId;
-    });
-    const playerRoundIds = params.players.map(({ _id: playerId }) => {
-      return PlayerRounds.insert({
-        playerId,
-        roundId,
-        gameId,
-        batchId
-      });
-    });
-    Rounds.update(roundId, { $set: { stageIds, playerRoundIds } });
-    return roundId;
-  });
+    }),
+    { concurrency: CONCURRENCY }
+  );
 
   console.timeEnd("inserts#" + gameId);
 
