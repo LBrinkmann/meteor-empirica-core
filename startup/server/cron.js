@@ -31,6 +31,7 @@ Meteor.startup(() => {
     const task = tasks[name];
 
     Meteor.defer(() => {
+      console.log('Test')
       const taskName = colors.bold(task.name);
       const startLog = `${colors.green("▶")} ${taskName}`;
       const doneLog = (took, wait) => {

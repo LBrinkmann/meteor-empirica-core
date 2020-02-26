@@ -88,10 +88,10 @@ Cron.add({
       gameId: { $exists: false },
       timedOutAt: { $exists: false }
     };
-
-    GameLobbies.find(query).forEach(lobby => {
+    
+    GameLobbies.find(query).forEach((lobby, idx) => {
+      console.time("lobbycron##" + lobby.lobbyConfigId);
       const lobbyConfig = LobbyConfigs.findOne(lobby.lobbyConfigId);
-
       switch (lobbyConfig.timeoutType) {
         case "lobby":
           checkLobbyTimeout(log, lobby, lobbyConfig);
@@ -104,6 +104,7 @@ Cron.add({
             `unknown LobbyConfig.timeoutType: ${lobbyConfig.timeoutType}`
           );
       }
+      console.timeEnd("checklobbytimeout" + lobby.lobbyConfigId);
     });
   }
 });

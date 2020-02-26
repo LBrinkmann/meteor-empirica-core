@@ -33,6 +33,7 @@ Cron.add({
         endOfStage(stage._id);
       } else {
         const { gameId } = stage;
+        console.time('gramecron##' + gameId)
         // make bots play
         const query = { gameId, bot: { $exists: true } };
         if (Players.find(query).count() === 0) {
@@ -85,6 +86,7 @@ Cron.add({
           });
 
           bot.onStageTick(botPlayer, game, round, stage, tick);
+          console.timeEnd('cron#' + gameId)
         });
       }
     });
