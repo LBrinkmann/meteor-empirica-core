@@ -86,7 +86,7 @@ Cron.add({
           });
 
           bot.onStageTick(botPlayer, game, round, stage, tick);
-          console.timeEnd('cron#' + gameId)
+          console.timeEnd('gramecron##' + gameId)
         });
       }
     });
