@@ -124,7 +124,8 @@ export default class Public extends React.Component {
             </NavbarGroup>
             <NavbarGroup align="right">
               {Meteor.isDevelopment ||
-              Meteor.settings.public.debug_newPlayer ? (
+              Meteor.settings.public.debug_newPlayer ||
+              localStorage.getItem("newPlayerButton") ? (
                 <Button
                   text="New Player"
                   minimal
@@ -135,7 +136,8 @@ export default class Public extends React.Component {
                 ""
               )}
               {Meteor.isDevelopment ||
-              Meteor.settings.public.debug_resetSession ? (
+              Meteor.settings.public.debug_resetSession ||
+              localStorage.getItem("resetSessionButton") ? (
                 <Button
                   text="Reset current session"
                   minimal
