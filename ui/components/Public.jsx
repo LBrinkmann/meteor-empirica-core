@@ -6,19 +6,20 @@ import {
   Intent,
   Navbar,
   NavbarGroup,
-  NavbarHeading
-} from "@blueprintjs/core";
-import { IconNames } from "@blueprintjs/icons";
-import React from "react";
-import { Helmet } from "react-helmet";
-import { Link } from "react-router-dom";
-import GameContainer from "../containers/GameContainer.jsx";
-import { removePlayerId } from "../containers/IdentifiedContainer.jsx";
-import AboutOriginal from "./About.jsx";
-import { CoreWrapper } from "./Helpers.jsx";
-import Loading from "./Loading.jsx";
-import NewPlayer from "./NewPlayer.jsx";
-import NoBatch from "./NoBatch.jsx";
+  NavbarHeading,
+} from '@blueprintjs/core';
+import { IconNames } from '@blueprintjs/icons';
+import React from 'react';
+import { Helmet } from 'react-helmet';
+import { Link } from 'react-router-dom';
+import queryString from 'query-string';
+import GameContainer from '../containers/GameContainer.jsx';
+import { removePlayerId } from '../containers/IdentifiedContainer.jsx';
+import AboutOriginal from './About.jsx';
+import { CoreWrapper } from './Helpers.jsx';
+import Loading from './Loading.jsx';
+import NewPlayer from './NewPlayer.jsx';
+import NoBatch from './NoBatch.jsx';
 
 const loadDocTitle = document.title;
 
@@ -50,24 +51,14 @@ export default class Public extends React.Component {
       const randId = Math.random()
         .toString(36)
         .substring(2, 15);
-      window.open(
-        `/?playerIdKey=${randPlayerIdKey}&${playerIdParam}=${randId}`,
-        "_blank"
-      );
+      window.open(`/?playerIdKey=${randPlayerIdKey}&${playerIdParam}=${randId}`, '_blank');
     } else {
-      window.open(`/?playerIdKey=${randPlayerIdKey}`, "_blank");
+      window.open(`/?playerIdKey=${randPlayerIdKey}`, '_blank');
     }
   };
 
   render() {
-    const {
-      loading,
-      renderPublic,
-      playerIdKey,
-      Header,
-      About,
-      ...rest
-    } = this.props;
+    const { loading, renderPublic, playerIdKey, Header, About, ...rest } = this.props;
     const { player } = rest;
 
     const AboutComp = About || AboutOriginal;
@@ -105,16 +96,13 @@ export default class Public extends React.Component {
         {Header !== undefined ? (
           <Header />
         ) : (
-          <Navbar className={["header", Classes.DARK].join(" ")}>
+          <Navbar className={['header', Classes.DARK].join(' ')}>
             <NavbarGroup align="left">
               <NavbarHeading>
                 <Link
-                  className={[
-                    Classes.BUTTON,
-                    Classes.LARGE,
-                    Classes.MINIMAL,
-                    Classes.BUTTON
-                  ].join(" ")}
+                  className={[Classes.BUTTON, Classes.LARGE, Classes.MINIMAL, Classes.BUTTON].join(
+                    ' '
+                  )}
                   to="/"
                 >
                   <Icon icon={IconNames.EXCHANGE} />
@@ -125,7 +113,7 @@ export default class Public extends React.Component {
             <NavbarGroup align="right">
               {Meteor.isDevelopment ||
               Meteor.settings.public.debug_newPlayer ||
-              localStorage.getItem("newPlayerButton") ? (
+              queryString.parse(this.props.location.search).newPlayerButton ? (
                 <Button
                   text="New Player"
                   minimal
@@ -133,11 +121,11 @@ export default class Public extends React.Component {
                   onClick={this.handleOpenAltPlayer}
                 />
               ) : (
-                ""
+                ''
               )}
               {Meteor.isDevelopment ||
               Meteor.settings.public.debug_resetSession ||
-              localStorage.getItem("resetSessionButton") ? (
+              queryString.parse(this.props.location.search).resetSessionButton ? (
                 <Button
                   text="Reset current session"
                   minimal
@@ -145,7 +133,7 @@ export default class Public extends React.Component {
                   onClick={this.handleReset}
                 />
               ) : (
-                ""
+                ''
               )}
 
               <Button
