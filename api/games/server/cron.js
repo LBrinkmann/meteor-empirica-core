@@ -22,6 +22,7 @@ Cron.add({
       estFinishedTime: { $gte: new Date() },
       finishedAt: { $exists: false }
     };
+    console.time("gamecron##");
     Games.find(query).forEach(game => {
       const stage = Stages.findOne(game.currentStageId);
 
@@ -88,5 +89,6 @@ Cron.add({
         });
       }
     });
+    console.timeEnd("gamecron##");
   }
 });
