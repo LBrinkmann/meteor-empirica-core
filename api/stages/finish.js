@@ -11,7 +11,7 @@ import { Treatments } from "../treatments/treatments.js";
 import { Stages } from "./stages.js";
 
 export const endOfStage = stageId => {
-  console.time("endOfStage#fetch#" + stageId);
+  console.time("endOfStageFetch");
   const stage = Stages.findOne(stageId);
   const { index, gameId, roundId } = stage;
   const game = Games.findOne(gameId);
@@ -33,8 +33,8 @@ export const endOfStage = stageId => {
     augmentPlayerStageRound(player, player.stage, player.round, game);
   });
 
-  console.timeEnd("endOfStage#fetch#" + stageId);
-  console.time("endOfStage#hooks#" + stageId);
+  console.timeEnd("endOfStageFetch");
+  console.time("endOfStageHooks");
 
   const { onStageEnd, onRoundEnd, onRoundStart, onStageStart } = config;
   if (onStageEnd) {
@@ -99,5 +99,5 @@ export const endOfStage = stageId => {
       $set: { finishedAt: new Date() }
     });
   }
-  console.timeEnd("endOfStage#hooks#" + stageId);
+  console.timeEnd("endOfStageHooks");
 };

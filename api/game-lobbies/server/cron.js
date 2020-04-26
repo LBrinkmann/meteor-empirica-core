@@ -89,7 +89,7 @@ Cron.add({
       timedOutAt: { $exists: false }
     };
 
-    console.time("gamelobbycron##");
+    console.time("gamelobbycron");
     GameLobbies.find(query).forEach(lobby => {
       const lobbyConfig = LobbyConfigs.findOne(lobby.lobbyConfigId);
 
@@ -106,6 +106,6 @@ Cron.add({
           );
       }
     });
-    console.timeEnd("gamelobbycron##");
+    console.timeEnd("gamelobbycron");
   }
 });
